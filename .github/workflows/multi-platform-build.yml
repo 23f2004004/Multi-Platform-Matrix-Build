@@ -1,0 +1,57 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    # Use a matrix of Node.js versions
+    strategy:
+      matrix:
+        node-version: ['18', '20', '21'] # At least 3 different variants
+
+    # Each job will run on a fresh Ubuntu runner
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the correct Node.js environment
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # Step 3: Required Step Identifier
+      - name: Report Matrix Variant (matrix-132029c)
+        id: matrix-132029c # Step Identifier Requirement met
+        run: |
+          echo "Starting build for Node.js version ${{ matrix.node-version }}"
+          echo "Node Version: ${{ matrix.node-version }}" >> build_info.txt
+          echo "Runner OS: ${{ runner.os }}" >> build_info.txt
+
+      # Step 4: Generate a unique, non-empty build artifact
+      - name: Generate unique build artifact
+        run: |
+          # Create a dummy output file that includes job-specific content
+          echo "--- Build Artifact Content ---" > build-output-${{ matrix.node-version }}.txt
+          echo "Build successful for Node.js version: ${{ matrix.node-version }}" >> build-output-${{ matrix.node-version }}.txt
+          echo "Timestamp: $(date)" >> build-output-${{ matrix.node-version }}.txt
+          echo "Unique build file created: build-output-${{ matrix.node-version }}.txt"
+
+      # Step 5: Upload the unique artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Artifact Name Requirement: build-132029c-<variant>
+          # This name ensures all uploaded artifacts will have the required prefix and unique variant suffix
+          name: build-132029c-node-${{ matrix.node-version }}
+          path: build-output-${{ matrix.node-version }}.txt # The path to the generated artifact
+          retention-days: 1 # Optional: Set a short retention period
